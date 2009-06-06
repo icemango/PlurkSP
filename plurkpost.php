@@ -72,8 +72,6 @@
 
     function getOwnUid($curl_handle, $pName, $pPasswd)
     {
-	//global $curl_handle, $pName, $pPasswd;
-
 	//login Plurk
 	curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($curl_handle, CURLOPT_COOKIEJAR, 'cookie.txt');
@@ -83,10 +81,8 @@
 	curl_exec($curl_handle);
 
 	//get plurk uid
-	curl_setopt($curl_handle, CURLOPT_URL, 'http://www.plurk.com/$pName');
+	curl_setopt($curl_handle, CURLOPT_URL, "http://www.plurk.com/$pName");
 	$res = curl_exec($curl_handle);
-	echo $res;
-	exit(1);
 	preg_match('/var GLOBAL = \{.*"uid": ([\d]+),.*\}/imU', $res,$matches);
 	return $matches[1];
     }
