@@ -49,21 +49,30 @@
     $json = new Services_JSON(SERVICES_JSON_LOOSE_TYPE);
 
     //get plurk uid
-    $uid = getOwnUid();
+    $uid = getOwnUid($curl_handle, $pName, $pPasswd);
 
-    $message = 'Test version 4 BB~!!';
+    $message = 'Test version 7 BB~!!';
+
+    //get date
+    //change the timezone to GMT+0
+    if (version_compare(PHP_VERSION, '5.2.0', '>='))
+	date_default_timezone_set('Europe/London');
+    else
+	putenv("TZ=Europe/London");
+
+    $date = urlencode(date('Y-m-d')."T".date('H:i:s'));
 
     //post Plurk
     curl_setopt($curl_handle, CURLOPT_URL, 'http://www.plurk.com/TimeLine/addPlurk');
-    curl_setopt($curl_handle, CURLOPT_POSTFIELDS, 'qualifier=says&content='.urlencode($message).'&lang=tr_ch&no_comments=0&uid='.$uid);
+    curl_setopt($curl_handle, CURLOPT_POSTFIELDS, 'qualifier=says&content='.urlencode($message).'&lang=tr_ch&no_comments=0&uid='.$uid.'&posted='.urlencode($date));
     curl_exec($curl_handle);
 
     curl_close($curl_handle);
 
 
-    function getOwnUid()
+    function getOwnUid($curl_handle, $pName, $pPasswd)
     {
-	global $curl_handle, $pName, $pPasswd;
+	//global $curl_handle, $pName, $pPasswd;
 
 	//login Plurk
 	curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
@@ -76,6 +85,8 @@
 	//get plurk uid
 	curl_setopt($curl_handle, CURLOPT_URL, 'http://www.plurk.com/$pName');
 	$res = curl_exec($curl_handle);
+	echo $res;
+	exit(1);
 	preg_match('/var GLOBAL = \{.*"uid": ([\d]+),.*\}/imU', $res,$matches);
 	return $matches[1];
     }
