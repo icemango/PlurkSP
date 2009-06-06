@@ -1,9 +1,5 @@
 <?php
 
-    //require library
-    require_once('JSON.php');
-
-    //config file name
     $fname_cfg = ".config";
 
     //check config file exists or not
@@ -46,15 +42,22 @@
 
     //initialize cURL and JSON class
     $curl_handle = curl_init();
-    $json = new Services_JSON(SERVICES_JSON_LOOSE_TYPE);
+
+    //login Plurk
+    curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl_handle, CURLOPT_COOKIEJAR, 'cookie.txt');
+    curl_setopt($curl_handle, CURLOPT_COOKIEFILE, 'cookie.txt');
+    curl_setopt($curl_handle, CURLOPT_URL, 'http://www.plurk.com/User/login');
+    curl_setopt($curl_handle, CURLOPT_POSTFIELDS, "nick_name=$pName&password=$pPasswd");
+    curl_exec($curl_handle);
 
     //get plurk uid
-    $uid = getOwnUid($curl_handle, $pName, $pPasswd);
+    curl_setopt($curl_handle, CURLOPT_URL, "http://www.plurk.com/$pName");
+    $res = curl_exec($curl_handle);
+    preg_match('/var GLOBAL = \{.*"uid": ([\d]+),.*\}/imU', $res,$matches);
+    $uid = $matches[1];
 
-    $message = 'Test version 7 BB~!!';
-
-    //get date
-    //change the timezone to GMT+0
+    //get date, change the timezone to GMT+0
     if (version_compare(PHP_VERSION, '5.2.0', '>='))
 	date_default_timezone_set('Europe/London');
     else
@@ -62,29 +65,18 @@
 
     $date = urlencode(date('Y-m-d')."T".date('H:i:s'));
 
+    //get user input message
+    $fp_stdin = @fopen('/dev/stdin', 'r') or die("stdin can't open!\n");
+    echo "please enter message: ";
+    $tmp = fgets($fp_stdin, 280);
+    $message = trim($tmp);
+    fclose($fp_stdin);
+
     //post Plurk
     curl_setopt($curl_handle, CURLOPT_URL, 'http://www.plurk.com/TimeLine/addPlurk');
     curl_setopt($curl_handle, CURLOPT_POSTFIELDS, 'qualifier=says&content='.urlencode($message).'&lang=tr_ch&no_comments=0&uid='.$uid.'&posted='.urlencode($date));
     curl_exec($curl_handle);
 
     curl_close($curl_handle);
-
-
-    function getOwnUid($curl_handle, $pName, $pPasswd)
-    {
-	//login Plurk
-	curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
-	curl_setopt($curl_handle, CURLOPT_COOKIEJAR, 'cookie.txt');
-	curl_setopt($curl_handle, CURLOPT_COOKIEFILE, 'cookie.txt');
-	curl_setopt($curl_handle, CURLOPT_URL, 'http://www.plurk.com/User/login');
-	curl_setopt($curl_handle, CURLOPT_POSTFIELDS, "nick_name=$pName&password=$pPasswd");
-	curl_exec($curl_handle);
-
-	//get plurk uid
-	curl_setopt($curl_handle, CURLOPT_URL, "http://www.plurk.com/$pName");
-	$res = curl_exec($curl_handle);
-	preg_match('/var GLOBAL = \{.*"uid": ([\d]+),.*\}/imU', $res,$matches);
-	return $matches[1];
-    }
 
 ?>
